@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 import environ
@@ -74,6 +75,16 @@ DATABASES = {
         'PORT': env('POSTGRES_PORT', default='5432'),
     }
 }
+
+# Test convenience: allow automatic SQLite fallback so contributors can run pytest without Postgres.
+if env.bool('SQLITE_TEST_FALLBACK', default=True):
+    if 'pytest' in sys.argv or any('pytest' in k for k in os.environ.keys()):
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'test_db.sqlite3',
+        }
+        # Reduce password validators noise during tests if needed (optional)
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
