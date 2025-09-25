@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ecommerce
+          POSTGRES_USER: ecomuser
+          POSTGRES_PASSWORD: ecompass
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U ecomuser -d ecommerce" \
+          --health-interval=10s --health-timeout=5s --health-retries=5
+    env:
+      POSTGRES_DB: ecommerce
+      POSTGRES_USER: ecomuser
+      POSTGRES_PASSWORD: ecompass
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      DB_BACKEND: postgres
+      DEBUG: False
+      SECRET_KEY: dummy
+      SQLITE_TEST_FALLBACK: False
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-django
+      - name: Wait for Postgres
+        run: |
+          for i in {1..10}; do
+            python -c "import psycopg2,os,time; time.sleep(1); conn=psycopg2.connect(dbname=os.environ['POSTGRES_DB'], user=os.environ['POSTGRES_USER'], password=os.environ['POSTGRES_PASSWORD'], host=os.environ['POSTGRES_HOST']); conn.close();" && break || sleep 2;
+          done
+      - name: Run migrations
+        run: python manage.py migrate --noinput
+      - name: Run tests
+        run: pytest -q

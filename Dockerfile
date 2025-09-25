@@ -17,6 +17,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 
+# Ensure entrypoint script is executable
+RUN chmod +x /app/docker-entrypoint.sh
+
 EXPOSE 8000
 
+# Default to development runserver (override to production command in deployment)
 CMD ["python","manage.py","runserver","0.0.0.0:8000"]

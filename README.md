@@ -23,6 +23,30 @@ Production-style backend providing product & category management, user authentic
 ### Docker
 `docker compose up --build`
 
+### Production (Gunicorn + WhiteNoise)
+Build image (still uses dev CMD by default). For production run:
+
+1. Set environment (DEBUG=False, proper ALLOWED_HOSTS).  
+2. Collect static & run Gunicorn (example command):
+
+```
+python manage.py collectstatic --noinput
+gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -
+```
+
+Or override Docker CMD:
+
+```
+docker run --env-file .env -e DEBUG=False -p 8000:8000 \
+	--name ecommerce api-image \
+	sh -c "./docker-entrypoint.sh gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+```
+
+Health check endpoint: `GET /health/` returns `{ "status": "ok" }`.
+
+### CI
+GitHub Actions workflow at `.github/workflows/ci.yml` runs migrations & tests against Postgres.
+
 ### Roadmap / Commits
 Planned commit messages:
 1. feat: set up Django project with PostgreSQL

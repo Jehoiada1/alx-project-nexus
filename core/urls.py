@@ -1,10 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/api/docs/', permanent=False), name='root-redirect'),
+    path('health/', lambda request: JsonResponse({'status': 'ok'}), name='health'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/', include('catalog.urls')),
