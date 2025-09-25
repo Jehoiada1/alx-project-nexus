@@ -1,0 +1,40 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment & secrets
+.env
+*.env
+.env.*
+
+# SQLite / local DB
+*.sqlite3
+db.sqlite3
+
+# Django stuff
+staticfiles/
+media/
+
+# Logs
+*.log
+
+# Tests / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Misc
+.DS_Store
