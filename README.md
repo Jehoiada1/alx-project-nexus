@@ -34,6 +34,50 @@ Planned commit messages:
 7. docs: add API usage instructions in Swagger
 
 ### Next Steps
-Add users & catalog apps, JWT auth endpoints, product discovery filters, and Swagger UI at `/api/docs`.
+Implemented: base project, JWT auth, catalog (products & categories), filtering, sorting, pagination, Swagger UI at `/api/docs`.
+
+### API Summary
+Auth:
+* POST /api/auth/register/
+* POST /api/auth/login/ (obtain pair)
+* POST /api/auth/refresh/
+* POST /api/auth/logout/
+* GET/PATCH /api/auth/me/
+
+Catalog:
+* GET /api/categories/
+* POST /api/categories/
+* GET /api/categories/{id}/
+* PUT/PATCH /api/categories/{id}/
+* DELETE /api/categories/{id}/
+* GET /api/products/?category=1&min_price=10&max_price=50&search=shirt&ordering=price&page=1&page_size=20
+* POST /api/products/
+* GET /api/products/{id}/
+* PUT/PATCH /api/products/{id}/
+* DELETE /api/products/{id}/
+
+Docs:
+* /api/schema/ (raw OpenAPI JSON)
+* /api/docs/ (Swagger UI)
+
+### Filtering & Sorting
+Query params for products:
+* category: category id
+* min_price / max_price
+* search: keyword in name or description
+* ordering: price, -price, created_at, -created_at
+* page, page_size (max 100)
+
+### Performance
+* select_related(category) on product queries
+* DB indexes on (category, price), price, created_at
+* Paginated responses
+
+### Remaining Enhancements
+* Add rate limiting / caching layer
+* Add ordering & inventory events
+* Add unit tests & CI workflow
+* Deployment config (Gunicorn + Nginx) / production Dockerfile stage
+
 
 # alx-project-nexus
