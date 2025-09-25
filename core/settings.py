@@ -76,14 +76,14 @@ DATABASES = {
     }
 }
 
-# Test convenience: allow automatic SQLite fallback so contributors can run pytest without Postgres.
+# Test convenience: unconditional SQLite fallback during pytest unless explicitly disabled.
 if env.bool('SQLITE_TEST_FALLBACK', default=True):
-    if 'pytest' in sys.argv or any('pytest' in k for k in os.environ.keys()):
+    # Detect pytest via environment variable or command string.
+    if os.environ.get('PYTEST_CURRENT_TEST') is not None or 'pytest' in ' '.join(sys.argv).lower():
         DATABASES['default'] = {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'test_db.sqlite3',
         }
-        # Reduce password validators noise during tests if needed (optional)
 
 
 AUTH_PASSWORD_VALIDATORS = [
