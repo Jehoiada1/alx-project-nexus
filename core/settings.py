@@ -86,6 +86,15 @@ else:
         }
     }
 
+# Optional DATABASE_URL (overrides above) for platforms like Render / Heroku
+try:
+    import dj_database_url  # type: ignore
+    db_url = env('DATABASE_URL', default=None)
+    if db_url:
+        DATABASES['default'] = dj_database_url.parse(db_url, conn_max_age=600, ssl_require=not DEBUG)
+except Exception:
+    pass
+
 # Test convenience: unconditional SQLite fallback during pytest unless explicitly disabled.
 if env.bool('SQLITE_TEST_FALLBACK', default=True) and DB_BACKEND != 'sqlite':
     # Detect pytest via environment variable or command string.
