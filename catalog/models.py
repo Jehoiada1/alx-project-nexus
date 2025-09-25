@@ -11,7 +11,7 @@ class TimeStampedModel(models.Model):
 
 class Category(TimeStampedModel):
     name = models.CharField(max_length=120, unique=True, db_index=True)
-    description = models.Textarea = models.TextField(blank=True)
+    description = models.TextField(blank=True)
 
     class Meta:
         ordering = ["name"]
