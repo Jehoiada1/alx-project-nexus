@@ -17,6 +17,7 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 DEBUG = env('DEBUG')
 SECRET_KEY = env('SECRET_KEY', default='insecure-secret-key')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+DB_BACKEND = env('DB_BACKEND', default='postgres')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -65,19 +66,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('POSTGRES_DB', default='ecommerce'),
-        'USER': env('POSTGRES_USER', default='ecomuser'),
-        'PASSWORD': env('POSTGRES_PASSWORD', default='ecompass'),
-        'HOST': env('POSTGRES_HOST', default='localhost'),
-        'PORT': env('POSTGRES_PORT', default='5432'),
+if DB_BACKEND == 'sqlite':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('POSTGRES_DB', default='ecommerce'),
+            'USER': env('POSTGRES_USER', default='ecomuser'),
+            'PASSWORD': env('POSTGRES_PASSWORD', default='ecompass'),
+            'HOST': env('POSTGRES_HOST', default='localhost'),
+            'PORT': env('POSTGRES_PORT', default='5432'),
+        }
+    }
 
 # Test convenience: unconditional SQLite fallback during pytest unless explicitly disabled.
-if env.bool('SQLITE_TEST_FALLBACK', default=True):
+if env.bool('SQLITE_TEST_FALLBACK', default=True) and DB_BACKEND != 'sqlite':
     # Detect pytest via environment variable or command string.
     if os.environ.get('PYTEST_CURRENT_TEST') is not None or 'pytest' in ' '.join(sys.argv).lower():
         DATABASES['default'] = {
