@@ -3,6 +3,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 import environ
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,7 +18,7 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 DEBUG = env('DEBUG')
 SECRET_KEY = env('SECRET_KEY', default='insecure-secret-key')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
-DB_BACKEND = env('DB_BACKEND', default='postgres')
+DB_BACKEND = env('DB_BACKEND', default='postgres')  # legacy; no longer used for DB routing
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -67,42 +68,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-if DB_BACKEND == 'sqlite':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': env('POSTGRES_DB', default='ecommerce'),
-            'USER': env('POSTGRES_USER', default='ecomuser'),
-            'PASSWORD': env('POSTGRES_PASSWORD', default='ecompass'),
-            'HOST': env('POSTGRES_HOST', default='localhost'),
-            'PORT': env('POSTGRES_PORT', default='5432'),
-        }
-    }
-
-# Optional DATABASE_URL (overrides above) for platforms like Render / Heroku
-try:
-    import dj_database_url  # type: ignore
-    db_url = env('DATABASE_URL', default=None)
-    if db_url:
-        DATABASES['default'] = dj_database_url.parse(db_url, conn_max_age=600, ssl_require=not DEBUG)
-except Exception:
-    pass
-
-# Test convenience: unconditional SQLite fallback during pytest unless explicitly disabled.
-if env.bool('SQLITE_TEST_FALLBACK', default=True) and DB_BACKEND != 'sqlite':
-    # Detect pytest via environment variable or command string.
-    if os.environ.get('PYTEST_CURRENT_TEST') is not None or 'pytest' in ' '.join(sys.argv).lower():
-        DATABASES['default'] = {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'test_db.sqlite3',
-        }
+# Database configuration using dj-database-url.
+# - Local/dev: defaults to SQLite at BASE_DIR/db.sqlite3 when DATABASE_URL is not set.
+# - Render/Prod: set DATABASE_URL to your Postgres connection string and Django will use it.
+DATABASES = {
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        ssl_require=not DEBUG,
+    )
+}
 
 
 AUTH_PASSWORD_VALIDATORS = [
