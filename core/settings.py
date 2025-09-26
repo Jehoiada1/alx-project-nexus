@@ -68,16 +68,37 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database configuration using dj-database-url.
-# - Local/dev: defaults to SQLite at BASE_DIR/db.sqlite3 when DATABASE_URL is not set.
-# - Render/Prod: set DATABASE_URL to your Postgres connection string and Django will use it.
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        ssl_require=not DEBUG,
-    )
-}
+# Database configuration avoiding sslmode with SQLite.
+# - Default: SQLite file at BASE_DIR/db.sqlite3
+# - Optional: SQLITE_MEMORY=true uses in-memory SQLite (not compatible with separate migrate process)
+# - If DATABASE_URL is provided and is Postgres, enable SSL; otherwise parse without SSL.
+SQLITE_MEMORY = env.bool('SQLITE_MEMORY', default=False)
+db_url = env('DATABASE_URL', default=None)
+
+if db_url:
+    is_pg = db_url.startswith('postgres://') or db_url.startswith('postgresql://')
+    DATABASES = {
+        'default': dj_database_url.parse(
+            db_url,
+            conn_max_age=600,
+            ssl_require=is_pg and not DEBUG,
+        )
+    }
+else:
+    if SQLITE_MEMORY:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': ':memory:',
+            }
+        }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -94,7 +115,15 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Django 5: prefer STORAGES over deprecated STATICFILES_STORAGE
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
